@@ -60,25 +60,28 @@ def receive_lin_response():
 if __name__ == "__main__":
     try:
         # Sende- und Empfangsprozess
-        values_to_send = [1000, 1001, 1002, 1003]  # Werte, die nacheinander gesendet werden
-        expected_responses = [1001, 1002, 1003, 1004]  # Erwartete Antworten von den Slaves
+        # 1000 = Blau
+        # 1001 = Grün
+        # 1002 = Rot
+        values_to_send = [1000, 1001, 1002, 1002, 1001, 1001, 1002]  # Werte, die nacheinander gesendet werden
+        # expected_responses = [1001, 1002, 1003]  # Erwartete Antworten von den Slaves
 
         # Durchläuft die Slaves nacheinander
+        message_id = b'\x01'
         while True:
-            for i in range(4):
-                message_id = b'\x01'
+            for i in range(len(values_to_send)):
                 # Nachricht an den aktuellen Slave senden
                 print(f"Sende Wert: {values_to_send[i]}")
                 send_lin_frame(message_id, values_to_send[i])
                 time.sleep(1)
 
-                # Antwort vom Slave empfangen und überprüfen
-                received_data = receive_lin_response()
-                if received_data is not None:
-                    print(f"Empfangene Antwort: {received_data}")
-                    print(f"Match: {received_data == expected_responses[i]}")
-                else:
-                    print("Keine gültige Antwort erhalten.")
+                # # Antwort vom Slave empfangen und überprüfen
+                # received_data = receive_lin_response()
+                # if received_data is not None:
+                #     print(f"Empfangene Antwort: {received_data}")
+                #     print(f"Match: {received_data == expected_responses[i]}")
+                # else:
+                #     print("Keine gültige Antwort erhalten.")
             time.sleep(5)
 
     except KeyboardInterrupt:

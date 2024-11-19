@@ -56,21 +56,37 @@ int main() {
             continue; // Ungültiges LIN-Frame, überspringen
         }
 
+        // Zusammengebauter Datenwert
+        uint16_t received_data = ((uint16_t)data_high << 8) | data_low;
+
         // Datenverarbeitung: LEDs entsprechend blinken lassen
-        switch (message_id) {
-        case 0x01:
+        // switch (message_id) {
+        // case 0x01:
+        //     blink_led(BLUE_LED_PIN, 1);  // Blaue LED blinkt 1-mal
+        //     break;
+        // case 0x02:
+        //     blink_led(GREEN_LED_PIN, 2); // Grüne LED blinkt 2-mal
+        //     break;
+        // case 0x03:
+        //     blink_led(RED_LED_PIN, 3);   // Rote LED blinkt 3-mal
+        //     break;
+        // default:
+        //     // Ungültige oder unbekannte Nachricht
+        //     blink_led(RED_LED_PIN, 5);  // Fehleranzeige: Rote LED blinkt 5-mal
+        //     break;
+        // }
+
+        // Datenverarbeitung: LEDs entsprechend blinken lassen
+        if (received_data == 1000) {
             blink_led(BLUE_LED_PIN, 1);  // Blaue LED blinkt 1-mal
-            break;
-        case 0x02:
-            blink_led(GREEN_LED_PIN, 2); // Grüne LED blinkt 2-mal
-            break;
-        case 0x03:
-            blink_led(RED_LED_PIN, 3);   // Rote LED blinkt 3-mal
-            break;
-        default:
-            // Ungültige oder unbekannte Nachricht
-            blink_led(RED_LED_PIN, 5);  // Fehleranzeige: Rote LED blinkt 5-mal
-            break;
+        } else if (received_data == 1001) {
+            blink_led(GREEN_LED_PIN, 1); // Grüne LED blinkt 1-mal
+        } else if (received_data == 1002) {
+            blink_led(RED_LED_PIN, 1);   // Rote LED blinkt 1-mal
+        } else {
+            // Für andere Werte keine LEDs blinken
+            // Optional könnte man hier eine Fehlermeldung anzeigen
+            blink_led(RED_LED_PIN, 3);   // Rote LED blinkt 3-mal als Fehleranzeige
         }
 
         // Debug-LED: Daten empfangen (optional für Testzwecke)
