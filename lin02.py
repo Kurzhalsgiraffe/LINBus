@@ -19,7 +19,7 @@ ser = serial.Serial(
 )
 
 # Funktion zum Senden eines LIN-Frames
-def send_lin_frame(data):
+def send_lin_frame(message_id, data):
     """ Sendet einen LIN-Frame mit dem angegebenen Dateninhalt """
     # Break-Signal für LIN (entsprechend der Spezifikation)
     ser.write(b'\x00' * 20)  # Längeres Break-Signal
@@ -27,7 +27,6 @@ def send_lin_frame(data):
 
     # Sync-Byte und ID (Beispiel-ID, kann angepasst werden)
     sync_byte = b'\x55'
-    message_id = b'\x01'  # ID des Slaves, der die Nachricht empfangen soll
 
     # LIN-Frame zusammensetzen: Sync-Byte + ID + Daten + Checksumme
     data_bytes = data.to_bytes(2, 'little')  # Konvertiere die Zahl in zwei Bytes
@@ -67,9 +66,10 @@ if __name__ == "__main__":
         # Durchläuft die Slaves nacheinander
         while True:
             for i in range(4):
+                message_id = b'\x01'
                 # Nachricht an den aktuellen Slave senden
                 print(f"Sende Wert: {values_to_send[i]}")
-                send_lin_frame(values_to_send[i])
+                send_lin_frame(message_id, values_to_send[i])
                 time.sleep(1)
 
                 # Antwort vom Slave empfangen und überprüfen
