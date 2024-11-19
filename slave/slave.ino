@@ -26,6 +26,24 @@ uint8_t uart_receive_byte() {
     return UDR0; // Empfangene Daten zurückgeben
 }
 
+void uart_send_byte(uint8_t data) {
+    while (!(UCSR0A & (1 << UDRE0))) {
+        // Warten, bis der Sende-Buffer frei ist
+    }
+    UDR0 = data; // Byte senden
+}
+
+void uart_send_frame(uint8_t message_id, uint8_t data_low, uint8_t data_high) {
+    uint8_t checksum = calculate_checksum(message_id, data_low, data_high);
+
+    // Frame senden: Sync-Byte, Message ID, Daten, Checksumme
+    uart_send_byte(0x55);  // Sync Byte
+    uart_send_byte(message_id);  // Message ID
+    uart_send_byte(data_low);  // Niedriges Byte der Daten
+    uart_send_byte(data_high); // Hohes Byte der Daten
+    uart_send_byte(checksum);  // Checksumme
+}
+
 uint8_t calculate_checksum(uint8_t message_id, uint8_t data_low, uint8_t data_high) {
     uint16_t checksum = 0;
     checksum += message_id;
@@ -62,9 +80,9 @@ int main() {
 
         // Überprüfen, ob Sync-Byte korrekt ist
         if (sync_byte != 0x55) {
-            blink_led(RED_LED_PIN, 1);
             continue; // Ungültiges LIN-Frame, überspringen
         }
+
         // Überprüfen, ob Checksumme korrekt ist
         if (calculated_checksum != received_checksum) {
             blink_led(RED_LED_PIN, 2);
@@ -86,8 +104,13 @@ int main() {
             blink_led(GREEN_LED_PIN, 1); // Grüne LED blinkt 1-mal
         }
 
-        // Debug-LED: Daten empfangen (optional für Testzwecke)
-        // blink_led(GREEN_LED_PIN, data_low); // Datenwert als Blinkanzahl (nur low byte)
+        // Daten um 1 erhöhen und Antwort senden
+        received_data += 1;  // Daten um 1 erhöhen
+
+        // Antwort-Frame senden
+        data_low = (uint8_t)(received_data & 0xFF);
+        data_high = (uint8_t)((received_data >> 8) & 0xFF);
+        uart_send_frame(SLAVE_ID, data_low, data_high);  // Antwort an den Master senden
     }
 
     return 0;

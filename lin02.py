@@ -39,23 +39,27 @@ def send_lin_frame(message_id, data):
 
 # Funktion zum Empfangen einer Antwort vom Slave
 def receive_lin_response():
-    """ Empfängt eine Antwort vom Slave (3 Bytes: Low, High, Checksum) """
-    response = ser.read(3)  # Liest 3 Bytes vom Slave (Low, High, Checksum)
-    if len(response) == 3:
+    """ Empfängt eine Antwort vom Slave """
+    response = ser.read(5)  # Wir erwarten 5 Bytes
+    if len(response) == 5:
         print(f"Rohdaten empfangen: {response.hex()}")
-        data_bytes = response[:2]  # Extrahiere die ersten zwei Bytes (Datenteil)
+        sync_byte = response[0]
+        message_id = response[1]
+        data_bytes = response[2:4]
+        received_checksum = response[4]
+
+        calculated_checksum = (sum(data_bytes) + message_id) & 0xFF
+
         received_data = int.from_bytes(data_bytes, 'little')
 
-        # Angepasste Checksumme prüfen (ohne Message ID)
-        checksum = response[2]
-        calculated_checksum = sum(response[:2]) & 0xFF
-        if checksum != calculated_checksum:
-            print(f"Fehlerhafte Checksumme: erhalten {checksum:02X}, erwartet {calculated_checksum:02X}")
+        if received_checksum != calculated_checksum:
+            print(f"Fehlerhafte Checksumme: erhalten {received_checksum:02X}, erwartet {calculated_checksum:02X}")
             return None
         return received_data
     else:
         print(f"Keine Antwort oder unvollständige Antwort empfangen: '{response}'")
         return None
+
 
 if __name__ == "__main__":
     try:
@@ -63,8 +67,8 @@ if __name__ == "__main__":
         # 1000 = Blau
         # 1001 = Grün
         # 1002 = Rot
-        values_to_send = [1000, 1001, 1002, 1002, 1001, 1001, 1002]  # Werte, die nacheinander gesendet werden
-        # expected_responses = [1001, 1002, 1003]  # Erwartete Antworten von den Slaves
+        values_to_send = [1000]  # Werte, die nacheinander gesendet werden
+        expected_responses = [1001]  # Erwartete Antworten von den Slaves
 
         # Durchläuft die Slaves nacheinander
         message_id = b'\x01'
@@ -75,13 +79,13 @@ if __name__ == "__main__":
                 send_lin_frame(message_id, values_to_send[i])
                 time.sleep(1)
 
-                # # Antwort vom Slave empfangen und überprüfen
-                # received_data = receive_lin_response()
-                # if received_data is not None:
-                #     print(f"Empfangene Antwort: {received_data}")
-                #     print(f"Match: {received_data == expected_responses[i]}")
-                # else:
-                #     print("Keine gültige Antwort erhalten.")
+                # Antwort vom Slave empfangen und überprüfen
+                received_data = receive_lin_response()
+                if received_data is not None:
+                    print(f"Empfangene Antwort: {received_data}")
+                    print(f"Match: {received_data == expected_responses[i]}")
+                else:
+                    print("Keine gültige Antwort erhalten.")
             time.sleep(5)
 
     except KeyboardInterrupt:
