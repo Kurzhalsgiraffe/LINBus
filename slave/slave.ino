@@ -1,4 +1,8 @@
 #include <SoftwareSerial.h>
+#define F_CPU 16000000UL
+#include <avr/io.h>
+#include <util/delay.h>
+
 
 const int CS_PIN = 4;      // PD4, Kontrolliert den CS-Pin des MCP2003
 const byte SLAVE_ID = 0x01; // ID des Slaves ist 1 (Muss für die anderen immer um 1 erhöht werden!)
@@ -18,7 +22,16 @@ void setup() {
   digitalWrite(CS_PIN, HIGH);  // LIN-Transceiver aktivieren
 }
 
+void blink() {
+  DDRB |= (1<<DDB1);
+  PORTB |= (1<<PORTB1);
+  _delay_ms(50);
+  PORTB &= ~ (1<<PORTB1);
+  _delay_ms(50);
+}
+
 void loop() {
+  blink();
   // Überprüfen, ob Daten vom LIN-Bus empfangen wurden
   if (linSerial.available() >= 4) {
     // Empfangene Daten auslesen (4 Bytes erwartet)
@@ -48,5 +61,5 @@ void loop() {
     }
   }
 
-  delay(100); // Kurze Verzögerung
+  delay(50); // Kurze Verzögerung
 }
