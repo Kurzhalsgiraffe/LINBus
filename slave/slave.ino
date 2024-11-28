@@ -1,9 +1,12 @@
-//#define F_CPU 16000000UL // CPU-Frequenz des ATmega328P (16 MHz)
 #include <avr/io.h>
 #include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <util/delay.h>
+
+// Timing
+#define F_CPU 16000000UL // CPU-Frequenz des ATmega328P (16 MHz)
+#define BAUD 19200
 
 // LED Pins
 #define BLUE_LED_PIN PB0
@@ -15,9 +18,11 @@
 #define TX_PIN PD1
 #define CS_PIN PD4
 
-const uint16_t BAUD = 19200;
-
 int slave_init();
+void writeBit(uint8_t, uint8_t);
+uint8_t readBit(uint8_t);
+uint8_t calculate_checksum(uint8_t, uint8_t);
+void led(uint8_t, uint8_t);
 
 // Functions
 int slave_init() {
