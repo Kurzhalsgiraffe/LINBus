@@ -26,9 +26,6 @@ void handler(int s) {
   exit(1);
 }
 
-
-
-
 int main()
 {
 
@@ -60,13 +57,13 @@ int main()
   port = serOpen(p, BAUD,0);
 
   //std::cout << port << std::cout;
-  
+
   char buf[] = {0x55};
 
   //signal(SIGINT, handler);
 
   std::cerr << "starting" << "\n";
-  
+
   for(unsigned int i = 0; i < 10000; i++) {
     serWrite(port, buf, 1);
     usleep(1000);
@@ -76,7 +73,6 @@ int main()
   serClose(port);
 
 }
-
 
 int sendByte(unsigned char byt) {
   char p[] = "/dev/ttyS0";
@@ -108,6 +104,4 @@ int sendBreak() {
   usleep(1000000*9/BAUD);
   //gpioTerminate();
   return 0;
-
-  
 }

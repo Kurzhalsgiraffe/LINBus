@@ -184,6 +184,14 @@ uint8_t converttickstonum2(uint8_t ticks) {
     return static_cast<uint8_t>(round(ticks * 10000) / 84734);
 }
 
+uint8_t converttickstonum2(uint8_t ticks) {
+    uint8_t num = (ticks * 100000) / 84734;
+    if (num % 10 > 5) {
+        return (num/10) + 1;
+    }
+    return (num/10);
+}
+
 uint8_t getsyncbytefromheader(uint8_t ci) {
   uint32_t temp = 0;
   uint8_t pos = 0;
@@ -216,14 +224,12 @@ uint8_t getpidbytefromheader(uint8_t ci) {
   return (uint8_t)(temp >> 1);
 }
 
-int main() {
+int main(argv*, argc) {
   slave_init();
 
   uint8_t currentstate = 0;
-
   //float factor = 0;
   uint8_t ci = 0;
-
 
   for (uint8_t i = 0; i < buffsize; i++) {
     capture[i] = 0x0;
@@ -234,22 +240,19 @@ int main() {
 
     if(ci >= buffsize) {
       while(1) {
-
-	led(RED_LED_PIN, 1);
-	_delay_us(100000);
-	led(RED_LED_PIN, 0);
-	_delay_us(100000);
+        led(RED_LED_PIN, 1);
+        _delay_us(100000);
+        led(RED_LED_PIN, 0);
+        _delay_us(100000);
       }
-
     }
 
     if(currentstate == 0 && state == 0x1) {
-
       currentstate = 1;
 
       if (count > 100) {
-	ci = 0;
-	//factor = 13 / count;
+	      ci = 0;
+	      //factor = 13 / count;
       }
 
       capture[ci] = count;
@@ -258,14 +261,12 @@ int main() {
 
     }
     if (currentstate == 1 && state == 0x0) {
-
       currentstate = 0;
-
       //pulse(2);
 
       if (count > 100) {
-	ci = 0;
-	//factor = 13 / count;
+	      ci = 0;
+	      //factor = 13 / count;
       }
       capture[ci] = count;
       values[ci] = 0;
@@ -274,15 +275,15 @@ int main() {
     if (currentstate == 1 && state == 0x1) {
       if (ovf == 1) {
 
-	/*sendbyte(capture[12]);
-	sendbyte(capture[13]);
-	sendbyte(capture[14]);
-	sendbyte(capture[15]);*/
+      /*sendbyte(capture[12]);
+      sendbyte(capture[13]);
+      sendbyte(capture[14]);
+      sendbyte(capture[15]);*/
 
-	//sendbyte(ci);
-	sendbyte(getsyncbytefromheader(ci));
-	//sendbyte(getpidbytefromheader(ci));
-	//sendbyte(numtics);
+      //sendbyte(ci);
+      sendbyte(getsyncbytefromheader(ci));
+      //sendbyte(getpidbytefromheader(ci));
+      //sendbyte(numtics);
       }
 
       //for (uint8_t i = 0; i < buffsize; i++) {
