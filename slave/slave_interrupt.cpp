@@ -223,7 +223,7 @@ uint8_t getpidbytefromheader(uint8_t ci) {
   return (uint8_t)(temp >> 1);
 }
 
-int main(argv *, argc) {
+int main() {
   slave_init();
 
   uint8_t currentstate = 0;
