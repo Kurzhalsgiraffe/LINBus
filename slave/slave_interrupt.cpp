@@ -181,7 +181,7 @@ uint8_t converttickstonum(uint8_t num) {
 }
 
 uint8_t converttickstonum2(uint8_t ticks) {
-    return static_cast<uint8_t>(round(ticks / 8.4734));
+    return static_cast<uint8_t>(round(ticks * 10000) / 84734);
 }
 
 uint8_t getsyncbytefromheader(uint8_t ci) {
