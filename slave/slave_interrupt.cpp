@@ -84,8 +84,7 @@ int slave_init() {
 void writeBitD(uint8_t pin, uint8_t value) {
   if (value) {
     PORTD |= (1 << pin); // Write 1
-  }
-  else {
+  } else {
     PORTD &= ~(1 << pin); // Write 0
   }
 }
@@ -93,8 +92,7 @@ void writeBitD(uint8_t pin, uint8_t value) {
 void writeBitC(uint8_t pin, uint8_t value) {
   if (value) {
     PORTC |= (1 << pin); // Write 1
-  }
-  else {
+  } else {
     PORTC &= ~(1 << pin); // Write 0
   }
 }
@@ -113,8 +111,7 @@ uint8_t calculate_checksum(uint8_t data_low, uint8_t data_high) {
 void led(uint8_t pin, uint8_t value) {
   if (value) {
     PORTB |= (1 << pin); // LED einschalten
-  }
-  else {
+  } else {
     PORTB &= ~(1 << pin); // LED ausschalten
   }
 }
