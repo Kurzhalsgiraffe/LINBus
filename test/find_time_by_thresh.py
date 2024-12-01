@@ -14,9 +14,9 @@ min_mismatches = float('inf')  # Start with a large number
 b_candidates = []  # List to store b values with minimum mismatches
 
 # Brute force search
-for l in range(80000, 90000):  # Iterate over b values
+for l in range(8000, 9000):  # Iterate over b values
     a = 0.0
-    b = l / 10000
+    b = l / 1000
     mismatches = []
     for i in range(0, 115):  # Check all ticks
         if old(i) != new(i, a, b):
@@ -32,6 +32,7 @@ for l in range(80000, 90000):  # Iterate over b values
 
 # Find the middle b value (median of b_candidates)
 b_candidates.sort()
+print(b_candidates[0], b_candidates[-1])
 middle_index = len(b_candidates) // 2
 middle_b = b_candidates[middle_index]
 

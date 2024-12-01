@@ -27,20 +27,22 @@ uint8_t capture[buffsize];
 uint8_t values[buffsize];
 
 volatile uint8_t state = 0x0;
-volatile uint16_t ovf = 0;
-volatile uint8_t count = 0;
+volatile uint16_t timer_overflow_counter = 0;
+volatile uint8_t timer_value = 0;
+
+uint8_t readBitD(uint8_t);
 
 ISR(PCINT2_vect) {
   state = readBitD(RX_PIN);
-  TCCR0B = 0;
-  count = TCNT0;
-  TCNT0 = 0;
-  ovf = 0;
-  TCCR0B = (1 << CS02) | (1 << CS00); // start timer
+  TCCR0B = 0; // Stop timer
+  timer_value = TCNT0; // Get current timer value
+  TCNT0 = 0; // Reset timer value
+  timer_overflow_counter = 0; // Reset overflow counter
+  TCCR0B = (1 << CS02) | (1 << CS00); // Set the timer prescaler to 1024; Timer ticks at 16,000,000 / 1024 = 15,625 Hz
 }
 
 ISR(TIMER0_OVF_vect) {
-  ovf += 1;
+  timer_overflow_counter += 1; // When the 8-Bit Timer (TCNT0) overflows, this ISR is triggered
 }
 
 int slave_init() {
@@ -69,14 +71,12 @@ int slave_init() {
   PCICR |= (1 << PCIE2);    // group 2
   PCMSK2 |= (1 << PCINT16); // set PCINT16 to interrupt
 
+  // Timer Registers
   // https://www.mikrocontroller.net/articles/AVR-GCC-Tutorial/Die_Timer_und_Z%C3%A4hler_des_AVR
   TCCR0A = 0;
-  // TCCR0B = (1<<CS02) | (1 << CS00); // start timer Prescaler 1024
-  TCCR0B = (1 << CS02) | (1 << CS00); // start timer Prescaler 1024
-  TIMSK0 |= (1 << TOIE0);             // overflow erlaubgen
-  // TIFR0  = 1<<TOV0;
-  //  gibt einen 16-bit counter
-  //  siehe TCCR1A
+  TCCR0B = (1 << CS02) | (1 << CS00); // Set the timer prescaler to 1024; Timer ticks at 16,000,000 / 1024 = 15,625 Hz
+  TIMSK0 |= (1 << TOIE0);             // overflow erlauben
+
   sei();
   return 0;
 }
@@ -184,17 +184,17 @@ uint8_t convertTicksToBitNum(uint8_t num) {
 }
 
 uint8_t convertTicksToBitNum2(uint8_t ticks) {
-  uint8_t num = (ticks * 100000) / 84734;
+  uint8_t num = (ticks * 10000) / 8474;
   if (num % 10 > 5) {
     return (num / 10) + 1;
   }
   return (num / 10);
 }
 
-uint8_t getsyncbytefromheader(uint8_t ci) {
+uint8_t getsyncbytefromheader(uint8_t current_index) {
   uint32_t temp = 0;
   uint8_t pos = 0;
-  for (uint8_t i = 2; i < ci; i++) {
+  for (uint8_t i = 2; i < current_index; i++) {
     uint8_t num = convertTicksToBitNum(capture[i]);
     for (uint8_t j = 0; j < num; j++) {
       if (values[i] == 1) {
@@ -207,10 +207,10 @@ uint8_t getsyncbytefromheader(uint8_t ci) {
   return (uint8_t)(temp >> 10);
 }
 
-uint8_t getpidbytefromheader(uint8_t ci) {
+uint8_t getpidbytefromheader(uint8_t current_index) {
   uint32_t temp = 0;
   uint8_t pos = 0;
-  for (uint8_t i = 2; i < ci; i++) {
+  for (uint8_t i = 2; i < current_index; i++) {
     uint8_t num = convertTicksToBitNum(capture[i]);
     for (uint8_t j = 0; j < num; j++) {
       if (values[i] == 1) {
@@ -227,15 +227,15 @@ int main() {
   slave_init();
 
   uint8_t currentstate = 0;
-  uint8_t ci = 0;
+  uint8_t current_index = 0;
 
-  for (uint8_t i = 0; i < buffsize; i++) {
+  for (uint8_t i = 0; i < buffsize; i++) { // Initialising arrays with Zeros
     capture[i] = 0x0;
     values[i] = 0x0;
   }
 
   while (1) {
-    if (ci >= buffsize) {
+    if (current_index >= buffsize) { // Buffer Overflow, infinite red LED blinking to indicate error
       while (1) {
         led(RED_LED_PIN, 1);
         _delay_us(100000);
@@ -244,45 +244,34 @@ int main() {
       }
     }
 
-    if (currentstate == 0 && state == 0x1) {
+    if (currentstate == 0 && state == 0x1) { // Rising Edge (High -> Low)
       currentstate = 1;
 
-      if (count > 100) {
-        ci = 0;
+      if (timer_value > 100) {
+        current_index = 0;
       }
 
-      capture[ci] = count;
-      values[ci] = 1;
-      ci++;
+      capture[current_index] = timer_value;
+      values[current_index] = 1;
+      current_index++;
     }
-    if (currentstate == 1 && state == 0x0) {
+
+    if (currentstate == 1 && state == 0x0) { // Falling Edge (Low -> High)
       currentstate = 0;
       // pulse(2);
 
-      if (count > 100) {
-        ci = 0;
+      if (timer_value > 100) {
+        current_index = 0;
       }
-      capture[ci] = count;
-      values[ci] = 0;
-      ci++;
+      capture[current_index] = timer_value;
+      values[current_index] = 0;
+      current_index++;
     }
-    if (currentstate == 1 && state == 0x1) {
-      if (ovf == 1) {
 
-        /*sendbyte(capture[12]);
-        sendbyte(capture[13]);
-        sendbyte(capture[14]);
-        sendbyte(capture[15]);*/
-
-        // sendbyte(ci);
-        sendbyte(getsyncbytefromheader(ci));
-        // sendbyte(getpidbytefromheader(ci));
-        // sendbyte(numtics);
+    if (currentstate == 1 && state == 0x1) { // State unchanged High
+      if (timer_overflow_counter == 1) { // If timer has overflowed once (256 ticks, i.e. 255*64us = 16.384ms). This timespan goes from 16.384ms to 32.704ms after last timer reset
+        sendbyte(getsyncbytefromheader(current_index));
       }
-
-      // for (uint8_t i = 0; i < buffsize; i++) {
-      // capture[i] = 0x0;
-      // }
     }
   }
 
