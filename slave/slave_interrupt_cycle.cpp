@@ -246,7 +246,7 @@ int main() {
 
     if (lastLinBreakIndex != -1) {
         // Ensure that the message is complete in the buffer
-        if ((write_pointer -1 + BUFFSIZE - lastLinBreakIndex) % BUFFSIZE >= LIN_MESSAGE_LENGTH) {
+        if ((write_pointer - 1 + BUFFSIZE - lastLinBreakIndex) & (BUFFSIZE - 1) >= LIN_MESSAGE_LENGTH) { // (write_pointer -1 + BUFFSIZE - lastLinBreakIndex) % BUFFSIZE, switched from Modulo to bit operation (only works if it is modulo power of 2)
 
             // Read X, Y, Z from the buffer
             for (uint8_t j = 0; j < LIN_SEGMENT_LENGTH; ++j) {
