@@ -1,0 +1,9 @@
+#ifndef SLAVEHPP
+#define SLAVEHPP
+
+
+uint8_t recvmessages[] ={0x11, 0x12, 0x13, 0x14};
+uint8_t returnmessages[] ={0x31, 0x41, 0x51, 0x61};
+
+  
+#endif

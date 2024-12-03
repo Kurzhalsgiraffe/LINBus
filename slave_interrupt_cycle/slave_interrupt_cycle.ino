@@ -247,7 +247,8 @@ int main() {
     if (lastLinBreakIndex != -1) {
         // Ensure that the message is complete in the buffer
         if ((write_pointer - 1 + BUFFSIZE - lastLinBreakIndex) & (BUFFSIZE - 1) >= LIN_MESSAGE_LENGTH) { // (write_pointer -1 + BUFFSIZE - lastLinBreakIndex) % BUFFSIZE, switched from Modulo to bit operation (only works if it is modulo power of 2)
-  	        uint16_t temp = 0;
+  	        uint16_t temp1 = 0;
+  	        uint16_t temp0 = 0;
             // Read X, Y, Z from the buffer
             for (uint8_t j = 0; j < LIN_SEGMENT_LENGTH; ++j) {
                 linSync[j] = buffer[(lastLinBreakIndex + 1 + j) % BUFFSIZE];
@@ -256,10 +257,14 @@ int main() {
                 linMsb[j] = buffer[(lastLinBreakIndex + 1 + 3 * LIN_SEGMENT_LENGTH + j) % BUFFSIZE];
                 linChecksum[j] = buffer[(lastLinBreakIndex + 1 + 4 * LIN_SEGMENT_LENGTH + j) % BUFFSIZE];
                 if (linSync[j] == 1) {
-                  temp |= 0x0001 <<j;
+                  temp0 |= (0x0001 << j);
+                }
+                if (linPid[j] == 1) {
+                  temp1 |= (0x0001 << j);
                 }
             }
-            sendbyte((0x01FE & temp) >> 1);
+            sendbyte((0x01FE & temp0) >> 1);
+            sendbyte((0x01FE & temp1) >> 1);
         }
     }
   }
